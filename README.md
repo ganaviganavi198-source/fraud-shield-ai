@@ -33,10 +33,25 @@ python app.py
 
 Then open http://127.0.0.1:5000/dashboard in your browser. Press `Ctrl + C` in the terminal to stop the server.
 
+
 ## How detection works
 
-[Describe your method here, for example: "Each transaction is scored using rules based on amount, time of day, and transaction frequency. Scores above X are high risk."]
+Each transaction is scored from 0 to 100 using four rules:
 
+| Check | Points |
+|---|---|
+| Amount above 50,000 | +30 |
+| Time before 6:00 or after 23:00 | +20 |
+| 3 or more failed attempts | +20 |
+| Location changed | +30 |
+
+The total score sets the label:
+
+- **0 to 30:** Safe Transaction
+- **31 to 60:** Medium Risk
+- **61 and above:** High Risk
+
+Every checked transaction is saved to the local database, and the dashboard counts safe, medium, and high-risk transactions, shows the latest 10, and charts checks by hour.
 ## Notes
 
 - The database file is created on your computer when the app runs. It is not uploaded to GitHub.
