@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FraudShield AI Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f5f9;
+            margin: 0;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #172033;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .card h2 {
+            margin-bottom: 10px;
+        }
+
+        .number {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .safe {
+            color: #22c55e;
+        }
+
+        .medium {
+            color: #f59e0b;
+        }
+
+        .high {
+            color: #ef4444;
+        }
+
+        .chart-box {
+            background: white;
+            max-width: 800px;
+            margin: 35px auto;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .chart-box h2 {
+            text-align: center;
+        }
+
+        .button-box {
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        @media (max-width: 800px) {
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .cards {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* AI Chat Card */
+.chat-card {
+    max-width: 1100px;
+    margin: 30px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+.chat-card h2 {
+    margin-top: 0;
+    color: #172033;
+}
+
+.chat-box {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.chat-box input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 15px;
+}
+
+.chat-box button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    background: #172033;
+    color: white;
+    cursor: pointer;
+}
+
+.chat-box button:hover {
+    opacity: 0.85;
+}
+/* ==============================
+   TRANSACTION HISTORY
+   ============================== */
+
+.history-card {
+    max-width: 1100px;
+    margin: 35px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    overflow-x: auto;
+}
+
+.history-card h2 {
+    text-align: center;
+    color: #172033;
+    margin-bottom: 20px;
+}
+
+#historyTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#historyTable th {
+    background: #172033;
+    color: white;
+    padding: 14px;
+    text-align: left;
+}
+
+#historyTable td {
+    padding: 14px;
+    border-bottom: 1px solid #eee;
+}
+
+#historyTable tr:hover {
+    background: #f8fafc;
+}
+    </style>
+</head>
+
+<body>
+
+    <h1>🛡️ FraudShield AI Dashboard</h1>
+
+    <p class="subtitle">
+        Transaction Fraud Monitoring Dashboard
+    </p>
+
+    <div class="cards">
+
+        <div class="card">
+            <h2>Total Transactions</h2>
+            <div class="number">
+                {{ total|default(0) }}
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="safe">🟢 Safe</h2>
+            <div class="number safe">
+                {{ safe|default(0) }}
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="medium">🟡 Medium Risk</h2>
+            <div class="number medium">
+                {{ medium|default(0) }}
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="high">🔴 High Risk</h2>
+            <div class="number high">
+                {{ high|default(0) }}
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="chart-box">
+
+        <h2>Fraud Risk Distribution</h2>
+
+        <canvas id="fraudChart"></canvas>
+
+    </div>
+
+    <div class="chart-box">
+
+         <h2>Risk Comparison</h2>
+
+         <canvas id="riskBarChart"></canvas>
+
+    </div>
+
+
+    <div class="button-box">
+
+        <a href="/">
+            <button>Check New Transaction</button>
+        </a>
+
+    </div>
+    <!-- AI CHAT CARD -->
+<div class="chat-card">
+
+    <div class="chat-header">
+        <span class="chat-icon">🤖</span>
+        <div>
+            <h2>FraudShield AI Assistant</h2>
+            <p>Ask about your transaction risk</p>
+        </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        <div class="bot-message">
+            👋 Hello! I'm FraudShield AI.
+            <br>
+            I can help you understand transaction fraud risks.
+        </div>
+    </div>
+
+    <div class="chat-input-area">
+        <input
+            type="text"
+            id="chatInput"
+            placeholder="Ask something about fraud detection..."
+        >
+
+        <button onclick="sendMessage()">
+            Send
+        </button>
+    </div>
+
+</div>
+
+
+    <script>
+
+        const safeCount = Number(
+            "{{ safe|default(0) }}"
+        );
+
+        const mediumCount = Number(
+            "{{ medium|default(0) }}"
+        );
+
+        const highCount = Number(
+            "{{ high|default(0) }}"
+        );
+
+
+        const ctx = document.getElementById("fraudChart");
+
+
+        new Chart(ctx, {
+
+            type: "pie",
+
+            data: {
+
+                labels: [
+                    "Safe",
+                    "Medium Risk",
+                    "High Risk"
+                ],
+
+                datasets: [{
+
+                    data: [
+                        safeCount,
+                        mediumCount,
+                        highCount
+                    ],
+
+                    backgroundColor: [
+                        "#22c55e",
+                        "#f59e0b",
+                        "#ef4444"
+                    ]
+
+                }]
+
+            },
+
+            options: {
+                responsive: true
+            }
+
+        });
+        const barCtx = document.getElementById("riskBarChart");
+
+new Chart(barCtx, {
+
+    type: "bar",
+
+    data: {
+
+        labels: [
+            "Safe",
+            "Medium Risk",
+            "High Risk"
+        ],
+
+        datasets: [{
+
+            label: "Number of Transactions",
+
+            data: [
+                safeCount,
+                mediumCount,
+                highCount
+            ],
+
+            backgroundColor: [
+                "#22c55e",
+                "#f59e0b",
+                "#ef4444"
+            ]
+
+        }]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        scales: {
+
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+
+        }
+
+    }
+
+});
+
+    </script>
+
+
+</div>
+
+<div class="chart-card">
+    <!-- Transaction Timeline Chart -->
+
+    <h2>Transaction Activity Over Time</h2>
+    <canvas id="timelineChart"></canvas>
+</div>
+
+
+<!-- REAL TRANSACTION HISTORY -->
+<div class="history-card">
+
+    <h2>Recent Transactions</h2>
+    <div class="button-box">
+    <button onclick="downloadReport()">
+        📥 Download Report
+    </button>
+</div>
+
+    <table id="historyTable">
+
+        <tr>
+            <th>Transaction ID</th>
+            <th>Amount</th>
+            <th>Risk Score</th>
+            <th>Status</th>
+            <th>Time</th>
+        </tr>
+
+        {% for transaction in transactions %}
+
+        <tr>
+
+            <td>
+                TXN{{ "%04d"|format(transaction[0]) }}
+            </td>
+
+            <td>
+                ₹{{ "{:,.2f}".format(transaction[1]) }}
+            </td>
+
+            <td>
+                {{ transaction[2] }}/100
+            </td>
+
+            <td>
+                {{ transaction[3] }}
+            </td>
+
+            <td>
+                {{ transaction[4] }}
+            </td>
+
+        </tr>
+
+        {% else %}
+
+        <tr>
+            <td colspan="5">
+                No transactions yet.
+            </td>
+        </tr>
+
+        {% endfor %}
+
+    </table>
+
+</div>
+
+<script>
+
+
+const timelineCtx = document.getElementById('timelineChart');
+
+new Chart(timelineCtx, {
+    data: {
+       labels: {{ timeline_labels | default([]) | tojson }},
+
+        datasets: [
+            {
+                type: 'bar',
+                label: 'Transactions',
+                data: {{ timeline_counts | tojson }},
+                backgroundColor: '#4f46e5',
+                borderRadius: 6,
+                yAxisID: 'y'
+            },
+
+            {
+                type: 'line',
+                label: 'Average Risk Score',
+                data: {{ timeline_risks | default([]) | tojson }},
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                yAxisID: 'risk'
+            }
+        ]
+    },
+
+    options: {
+        responsive: true,
+
+        interaction: {
+            mode: 'index',
+            intersect: false
+        },
+
+        plugins: {
+            legend: {
+                display: true
+            },
+
+            tooltip: {
+                enabled: true
+            }
+        },
+
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Transactions'
+                }
+            },
+
+            risk: {
+                beginAtZero: true,
+                max: 100,
+                position: 'right',
+
+                title: {
+                    display: true,
+                    text: 'Risk Score'
+                },
+
+                grid: {
+                    drawOnChartArea: false
+                }
+            }
+        }
+    }
+});
+</script>
+
+<script>
+function sendMessage() {
+    let input = document.getElementById("chatInput");
+    let messageBox = document.getElementById("chatMessages");
+
+    let userText = input.value.trim();
+
+    if(userText === "") return;
+    let reply = "";
+if (userText.toLowerCase().includes("high risk")) {
+    reply = "High-risk transactions may involve unusual amounts, locations, or multiple failed attempts.";
+}
+else if (userText.toLowerCase().includes("safe")) {
+    reply = "Safe transactions show normal user behavior and low fraud indicators.";
+}
+else if (userText.toLowerCase().includes("fraud")) {
+    reply = "Fraud is a dishonest activity intended to gain money or sensitive information.";
+}
+else if (userText.toLowerCase().includes("phishing")) {
+    reply = "Phishing is a scam where attackers trick users into revealing passwords or banking details.";
+}
+else if (userText.toLowerCase().includes("suspicious")) {
+    reply = "A suspicious transaction may involve unusual amounts, locations, or abnormal account activity.";
+}
+else {
+    reply = "Please be careful and verify transaction details before proceeding.";
+}
+    
+
+
+
+    messageBox.innerHTML += `
+        <p><b>You:</b> ${userText}</p>
+        <p><b>FraudShield AI:</b> ${reply}</p>
+    `;
+
+    input.value = "";
+}
+  
+function downloadReport() {
+
+    let table = document.getElementById("historyTable");
+
+    let csv = [];
+
+    for (let row of table.rows) {
+
+        let cols = row.querySelectorAll("td, th");
+
+        let rowData = [];
+
+        cols.forEach(col => rowData.push(col.innerText));
+
+        csv.push(rowData.join(","));
+    }
+
+    let csvFile = new Blob(
+        [csv.join("\n")],
+        { type: "text/csv" }
+    );
+
+    let downloadLink = document.createElement("a");
+
+    downloadLink.download = "FraudShield_Report.csv";
+
+    downloadLink.href =
+        window.URL.createObjectURL(csvFile);
+
+    downloadLink.style.display = "none";
+
+    document.body.appendChild(downloadLink);
+
+    downloadLink.click();
+}
+</script>
+
+<!-- REAL RECENT TRANSACTIONS -->
+
+<div class="transactions-section">
+
+    <h2>Recent Transactions</h2>
+    <p>Latest transactions recorded by FraudShield AI</p>
+
+    <div class="transaction-table-container">
+
+        <table class="transaction-table">
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Amount</th>
+                    <th>Risk Score</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for transaction in transactions %}
+
+                <tr>
+
+                    <td>
+                        TXN{{ "%04d"|format(transaction[0]) }}
+                    </td>
+
+                    <td>
+                        ₹{{ "{:,.2f}".format(transaction[1]) }}
+                    </td>
+
+                    <td>
+                        {{ transaction[2] }}/100
+                    </td>
+
+                    <td>
+                        {{ transaction[3] }}
+                    </td>
+
+                    <td>
+                        {{ transaction[4] }}
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+                    <td colspan="5">
+                        No transactions recorded yet.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+</body>
+</html>
+

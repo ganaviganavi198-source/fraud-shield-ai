@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FraudShield AI</title>
+</head>
+
+<body>
+
+    <h1>🛡️ FraudShield AI</h1>
+    <h2>Transaction Fraud Detection</h2>
+
+    <form method="POST">
+
+        <label>Transaction Amount:</label>
+        <input type="number" name="amount" required>
+
+        <br><br>
+
+        <label>Transaction Hour (0-23):</label>
+        <input type="number" name="hour" min="0" max="23" required>
+
+        <br><br>
+
+        <label>Failed Attempts:</label>
+        <input type="number" name="failed_attempts" min="0" required>
+
+        <br><br>
+
+        <label>Location Changed?</label>
+
+        <select name="location_changed">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+        </select>
+
+        <br><br>
+
+        <button type="submit">
+            Check Transaction
+        </button>
+
+    </form>
+
+</body>
+</html>
